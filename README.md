@@ -66,7 +66,7 @@ In the popup:
 | Mouse | Keyboard | Does |
 |---|---|---|
 | hover a row | `j` / `k` | move the cursor |
-| drag a row's header | `Shift+J` / `Shift+K` | move the row down / up |
+| drag a row's header | `Shift+J` / `Shift+K`, `Shift+Down` / `Shift+Up` | move the row down / up |
 | click a row's header | `Enter` | rename its label and short label |
 | ✕ at the row's right edge | `x` | remove the zone (home never is) |
 | "+ Add zone" | `a` | add a zone: pick it, adjust the label, `Enter` |

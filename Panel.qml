@@ -277,7 +277,7 @@ Panel {
 
   function finishRename() {
     editRow = -1
-    Qt.callLater(function() { keyCatcher.forceActiveFocus() })
+    Qt.callLater(function() { keyShim.forceActiveFocus() })
   }
 
   // IPC "add": show the panel with the picker ready to type into.
@@ -300,7 +300,7 @@ Panel {
   function cancelAdd() {
     addOpen = false
     pendingZone = ""
-    Qt.callLater(function() { keyCatcher.forceActiveFocus() })
+    Qt.callLater(function() { keyShim.forceActiveFocus() })
   }
 
   function commitAdd() {
@@ -423,7 +423,7 @@ Panel {
     bar: root.bar
     open: root.opened
     centerOnBar: true
-    focusTarget: keyCatcher
+    focusTarget: keyShim
     // contentWidth is the card's outer width: unlike fittedContentHeight,
     // fittedContentWidth does not add the padding/border inset, so add it
     // here or the last column gets clipped.
@@ -443,10 +443,27 @@ Panel {
       onMoveRequested: function(dx, dy) { if (dy !== 0) root.moveCursor(dy) }
       onActivateRequested: root.startRename(root.cursorRow)
       onDeleteRequested: root.removeZoneAt(root.cursorRow)
-      onTextKey: function(t) {
-        if (t === "a") root.openAdd()
-        else if (t === "J") root.moveZone(root.cursorRow, root.cursorRow + 1)
-        else if (t === "K") root.moveZone(root.cursorRow, root.cursorRow - 1)
+      onTextKey: function(t) { if (t === "a") root.openAdd() }
+
+      // Shift+J / Shift+K and Shift+Down / Shift+Up move the row. The
+      // dispatcher maps arrows to cursor moves whatever the modifiers and
+      // reads letters by their text, which a virtual keyboard can deliver
+      // lowercase under Shift, so both pairs are matched here by key code
+      // on the focused child before they reach it; everything else
+      // propagates up to the dispatcher unchanged.
+      Item {
+        id: keyShim
+        focus: true
+        Keys.onPressed: function(event) {
+          if (root.editing || !(event.modifiers & Qt.ShiftModifier)) return
+          if (event.key === Qt.Key_Down || event.key === Qt.Key_J) {
+            root.moveZone(root.cursorRow, root.cursorRow + 1)
+            event.accepted = true
+          } else if (event.key === Qt.Key_Up || event.key === Qt.Key_K) {
+            root.moveZone(root.cursorRow, root.cursorRow - 1)
+            event.accepted = true
+          }
+        }
       }
 
       Column {
