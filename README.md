@@ -12,7 +12,8 @@ means a beat carries no hint of whether anyone is awake. This widget puts
 the beat in your bar and projects your zones onto the 1000-beat day so the
 day/night cycle is visible at a glance.
 
-Derived from Simon Späti's
+By TheMightyPong ([PongAlmighty](https://github.com/PongAlmighty) on
+GitHub). Derived from Simon Späti's
 [omarchy-timezones-plugin](https://github.com/sspaeti/omarchy-timezones-plugin)
 (MIT). Beat math follows the canonical definition from the
 [SwatchTime](https://github.com/swatchtime) organization.

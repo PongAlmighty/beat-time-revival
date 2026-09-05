@@ -1,8 +1,0 @@
-{
-  "artboards": [
-    { "file": "Main.dc.html", "title": "1 · Idle", "x": 0, "y": 0, "w": 1000, "h": 330 },
-    { "file": "RowHover.dc.html", "title": "2 · Row hover, remove", "x": 0, "y": 460, "w": 1000, "h": 330 },
-    { "file": "AddZone.dc.html", "title": "3 · Add zone", "x": 0, "y": 920, "w": 1000, "h": 480 }
-  ],
-  "launch": { "view": "canvas" }
-}

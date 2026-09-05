@@ -1,4 +1,2 @@
-# Seeded design canvas (2 MB editor payload) and generated artboards;
-# regenerate with `node design/gen.mjs` and the design skill.
-design/beat-time-zone-editing.html
-design/*.dc.html
+# Design mockup tooling stays local; it depends on the Claude Design canvas payload.
+design/
