@@ -83,7 +83,7 @@ const rulerRow = (hover) => {
   return `<div class="row ruler">
     <div class="hdr" style="flex-direction: row; align-items: center; gap: 6px;">
       <span class="time" style="color: ${hover ? ACCENT : FG}">${hover ? "@" + String(hover).padStart(3, "0") : M.beatLabel(nowUtc)}</span>
-      <span class="sub">BMT ${M.dateLabel(nowUtc, 60)}</span>
+      <span class="sub">Internet Time</span>
     </div>
     <div class="strip">${cells}</div>
     <div class="act"></div>

@@ -125,8 +125,6 @@ Panel {
   readonly property string beatLabel: Model.beatLabel(nowUtc, centibeats)
   readonly property double dayStart: Model.bielDayStartUtc(nowUtc)
   readonly property double nowBeats: Model.beatsAt(nowUtc)
-  // Biel's own calendar day — the day the ruler spans.
-  readonly property string bielDate: Model.dateLabel(nowUtc, 60)
 
   // Hovered beat (whole), or -1. The moment every row converts when set.
   property int hoverBeat: -1
@@ -489,8 +487,10 @@ Panel {
               font.pixelSize: Style.font.body
               font.bold: true
             }
+            // Names the system, not a zone: a beat is the same everywhere.
+            // Each row marks its own local midnight, so no date is needed.
             Text {
-              text: "BMT " + root.bielDate
+              text: "Internet Time"
               color: Qt.darker(root.fg, 1.5)
               font.family: root.fontFam
               font.pixelSize: Style.font.caption
