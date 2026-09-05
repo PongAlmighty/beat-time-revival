@@ -23,8 +23,19 @@ BarWidget {
   readonly property bool hoverExpand: setting("hoverExpand", true) === true
 
   readonly property string beat: panelLoader.item ? panelLoader.item.beatLabel : "@···"
-  readonly property string compact: panelLoader.item ? panelLoader.item.compactLabel : ""
+  readonly property var compactParts: panelLoader.item ? panelLoader.item.compactParts : []
+  readonly property string compact: compactParts.join(Model.SEPARATOR)
   readonly property bool expanded: hoverExpand && !vertical && button.tooltipHovered && compact !== ""
+
+  // Up to `tickerZones` zones sit still in the hover label. Past that the
+  // label becomes a window the width of that many zones and the full list
+  // scrolls through it slowly, ticker style, so a long list never shoves
+  // the neighboring widgets around.
+  readonly property int tickerZones: Math.max(1, parseInt(setting("tickerZones", 3), 10) || 3)
+  readonly property real tickerSpeed: Math.max(1, Number(setting("tickerSpeed", 24)) || 24)
+  readonly property bool ticker: compactParts.length > tickerZones
+  readonly property string tickerWindowText: compactParts.slice(0, tickerZones).join(Model.SEPARATOR)
+  readonly property string tickerLoopText: compact + Model.SEPARATOR
 
   // Vertical bars stack the beat one character per line, like the clock.
   readonly property var verticalLines: beat.split("")
@@ -93,6 +104,9 @@ BarWidget {
     function hide(): void { root.close() }
     function toggle(): void { root.togglePanel() }
     function refresh(): void { root.refresh() }
+    function add(): void { if (panelLoader.item) panelLoader.item.openAddFromHotkey() }
+    function addZone(zone: string): void { if (panelLoader.item) panelLoader.item.addZone(zone, "", "") }
+    function removeZone(zone: string): void { if (panelLoader.item) panelLoader.item.removeZoneByName(zone) }
   }
 
   WidgetButton {
@@ -147,13 +161,56 @@ BarWidget {
     }
 
     Text {
-      visible: root.expanded
+      visible: root.expanded && !root.ticker
       text: root.compact
       textFormat: Text.PlainText
       color: root.labelColor
       font.family: button.fontFamily
       font.pixelSize: button.fontSize
       renderType: Text.NativeRendering
+    }
+
+    Item {
+      id: tickerView
+      visible: root.expanded && root.ticker
+      clip: true
+      width: windowMeter.advanceWidth
+      height: scroller.implicitHeight
+      anchors.verticalCenter: parent.verticalCenter
+
+      TextMetrics {
+        id: windowMeter
+        font.family: button.fontFamily
+        font.pixelSize: button.fontSize
+        text: root.tickerWindowText
+      }
+
+      TextMetrics {
+        id: loopMeter
+        font.family: button.fontFamily
+        font.pixelSize: button.fontSize
+        text: root.tickerLoopText
+      }
+
+      // The loop text twice over, scrolled by exactly one copy and
+      // restarted, so the wrap is seamless.
+      Text {
+        id: scroller
+        text: root.tickerLoopText + root.tickerLoopText
+        textFormat: Text.PlainText
+        color: root.labelColor
+        font.family: button.fontFamily
+        font.pixelSize: button.fontSize
+        renderType: Text.NativeRendering
+
+        NumberAnimation on x {
+          running: tickerView.visible && loopMeter.advanceWidth > 0
+          from: 0
+          to: -loopMeter.advanceWidth
+          duration: Math.max(1000, loopMeter.advanceWidth / root.tickerSpeed * 1000)
+          loops: Animation.Infinite
+        }
+      }
     }
   }
 

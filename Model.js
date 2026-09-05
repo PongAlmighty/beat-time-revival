@@ -173,8 +173,8 @@ function dayNightGlyph(utcMs, offsetMin) {
   return tintFor(localFields(utcMs, offsetMin).hour) === "night" ? "󰖔" : "󰖙"
 }
 
-// Compact bar label shown on hover: "󰖙 NY 07:12 · 󰖔 CDO 19:12".
-function compactLabel(zones, nowUtcMs, glyphs) {
+// One bar-label entry per non-home zone: "󰖙 NY 07:12".
+function compactParts(zones, nowUtcMs, glyphs) {
   var parts = []
   for (var i = 0; i < zones.length; i++) {
     var z = zones[i]
@@ -183,7 +183,61 @@ function compactLabel(zones, nowUtcMs, glyphs) {
     if (glyphs) s = dayNightGlyph(nowUtcMs, z.offsetMin) + " " + s
     parts.push(s)
   }
-  return parts.join(" · ")
+  return parts
+}
+
+var SEPARATOR = " · "
+
+// Compact bar label shown on hover: "󰖙 NY 07:12 · 󰖔 CDO 19:12".
+function compactLabel(zones, nowUtcMs, glyphs) {
+  return compactParts(zones, nowUtcMs, glyphs).join(SEPARATOR)
+}
+
+// ---- Zone list editing.
+
+// `timedatectl list-timezones` output → ["Africa/Abidjan", ...].
+function parseTimezoneList(text) {
+  var out = []
+  var lines = String(text || "").split("\n")
+  for (var i = 0; i < lines.length; i++) {
+    var z = lines[i].trim()
+    if (z !== "" && /^[A-Za-z0-9_\/+-]+$/.test(z)) out.push(z)
+  }
+  return out
+}
+
+// "America/Argentina/Buenos_Aires" → "Buenos Aires"; "Etc/GMT+5" → "GMT+5".
+function cityLabel(zone) {
+  var parts = String(zone || "").split("/")
+  return parts[parts.length - 1].replace(/_/g, " ")
+}
+
+// Bar short label for a new zone: the tzdata abbreviation when it is a
+// real one ("JST", "CET"), else the city's first three letters — tzdata
+// hands back numeric offsets ("+04") for zones with no conventional name.
+function shortLabelFor(zone, abbr) {
+  var a = String(abbr || "").trim()
+  if (/^[A-Z]{2,5}$/.test(a)) return a
+  var city = cityLabel(zone).replace(/[^A-Za-z]/g, "")
+  return city.substring(0, 3).toUpperCase()
+}
+
+// Index of `zone` in a zone config list, or -1.
+function zoneIndex(zoneConfig, zone) {
+  for (var i = 0; i < zoneConfig.length; i++) {
+    if (!zoneConfig[i].home && String(zoneConfig[i].zone || "") === zone) return i
+  }
+  return -1
+}
+
+// Copy of `list` with the item at `from` moved so it lands at index `to`.
+function moveItem(list, from, to) {
+  var out = list.slice()
+  if (from < 0 || from >= out.length) return out
+  var clamped = Math.max(0, Math.min(out.length - 1, to))
+  var item = out.splice(from, 1)[0]
+  out.splice(clamped, 0, item)
+  return out
 }
 
 // Fallback when the widget entry in shell.json carries no "zones" array —
@@ -217,7 +271,14 @@ if (typeof module !== "undefined") {
     dateLabel: dateLabel,
     diffLabel: diffLabel,
     dayNightGlyph: dayNightGlyph,
+    compactParts: compactParts,
     compactLabel: compactLabel,
+    SEPARATOR: SEPARATOR,
+    parseTimezoneList: parseTimezoneList,
+    cityLabel: cityLabel,
+    shortLabelFor: shortLabelFor,
+    zoneIndex: zoneIndex,
+    moveItem: moveItem,
     plainText: plainText,
     defaultZones: defaultZones
   }

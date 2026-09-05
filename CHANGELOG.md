@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0
+
+- Zones are edited in the popup: "+ Add zone" opens a searchable tzdata
+  picker with label fields, rows drag to reorder, click a header to rename,
+  and a right-edge action removes. Keyboard: `j`/`k`, `Shift+J`/`Shift+K`,
+  `Enter`, `x`, `a`, `Esc`.
+- New zones default their short label to tzdata's abbreviation.
+- Bar hover view shows up to `tickerZones` zones at rest and scrolls the
+  rest through, ticker style (`tickerSpeed`).
+- IPC: `add`, `addZone <zone>`, `removeZone <zone>`.
+
 ## 0.1.0
 
 - Initial release, derived from

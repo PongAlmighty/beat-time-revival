@@ -29,6 +29,10 @@ Derived from Simon Späti's
   marks the current beat across every row.
 - **Hover a beat** in the popup and every row's header switches to the local
   time at that beat — "@330 is 01:55 in New York, 07:55 in Biel".
+- **Edit zones in the popup**: "+ Add zone" opens a searchable picker over
+  every zone tzdata knows, rows drag to reorder, click a row's header to
+  rename it, and a remove button appears at the right edge of the row under
+  the cursor. All of it works from the keyboard too.
 
 No network, no API: zone offsets and abbreviations come straight from the
 system's tzdata (`TZ=<zone> date`), so summer/winter time is always
@@ -49,11 +53,36 @@ omarchy plugin add https://github.com/PongAlmighty/beat-time-revival.git --enabl
 
 ## Usage
 
-- **Hover** the beat: compact view of your zones' local times
+- **Hover** the beat: compact view of your zones' local times. Up to three
+  zones sit still; more than that scroll through slowly, ticker style.
 - **Right click**: open/close the beat grid (Escape also closes)
 - **Hover a beat** in the popup: converts that beat across all zones
 - **Middle click**: refresh timezone offsets
 - **Left click**: unused, left to the bar and compositor
+
+In the popup:
+
+| Mouse | Keyboard | Does |
+|---|---|---|
+| hover a row | `j` / `k` | move the cursor |
+| drag a row's header | `Shift+J` / `Shift+K` | move the row down / up |
+| click a row's header | `Enter` | rename its label and short label |
+| ✕ at the row's right edge | `x` | remove the zone (home never is) |
+| "+ Add zone" | `a` | add a zone: pick it, adjust the label, `Enter` |
+| | `Esc` | cancel an edit, or close the popup |
+
+Changes are written straight back to the widget's entry in `shell.json`.
+Scripts and keybindings can do the same over IPC:
+
+```sh
+omarchy-shell io.github.pongalmighty.beattime add              # open the popup on the picker
+omarchy-shell io.github.pongalmighty.beattime addZone Asia/Tokyo
+omarchy-shell io.github.pongalmighty.beattime removeZone Asia/Tokyo
+omarchy bar set io.github.pongalmighty.beattime zones '[...]' --json   # replace the whole list
+```
+
+A zone added without a short label gets tzdata's abbreviation ("JST") when
+it has a conventional one, else the first three letters of the city.
 
 ## Configure
 
@@ -95,6 +124,10 @@ save). Example:
 - `beatsPerCell` — grid granularity: one of `25`, `40`, `50`, `100`, `125`,
   `200`. Default `50` (20 columns of 72 minutes). `40` gives 25 columns of
   roughly one hour each.
+- `tickerZones` — how many zones the bar's hover view shows at rest. With
+  more zones than this, the view stays that wide and the full list scrolls
+  through it. Default `3`.
+- `tickerSpeed` — ticker scroll speed in pixels per second. Default `24`.
 - `icon` — optional glyph drawn before the beat in the bar. Default none.
 - `hoverExpand` — set `false` to keep the bar pill static instead of
   expanding on hover. Default `true`.

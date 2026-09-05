@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap">
+  <style>
+  body { margin: 0; background: #14140f; font-family: 'JetBrains Mono', 'JetBrainsMono Nerd Font', ui-monospace, monospace; font-size: 12px; color: #8f8c87; -webkit-font-smoothing: antialiased; }
+  a { color: #b4666f; } a:hover { color: #8f8c87; }
+  .card { position: relative; background: #090907; border: 2px solid #b4666f; padding: 14px; display: inline-block; }
+  .rows { display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .row { display: flex; align-items: center; height: 38px; }
+  .ruler { height: 22px; }
+  .hdr { width: 168px; flex: none; display: flex; flex-direction: column; gap: 2px; }
+  .hdr .l1 { display: flex; align-items: center; gap: 6px; }
+  .hdr .l2 { display: flex; align-items: center; gap: 6px; }
+  .name { font-size: 12px; color: #8f8c87; }
+  .abbr { font-size: 10px; color: #5f5d5a; }
+  .time { font-size: 12px; font-weight: 700; color: #8f8c87; }
+  .sub { font-size: 10px; color: #5f5d5a; }
+  .strip { margin-left: 14px; width: 660px; flex: none; display: flex; gap: 1px; }
+  .cell { width: 32.05px; height: 38px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 10px; line-height: 0.85; text-align: center; }
+  .rcell { width: 32.05px; height: 22px; display: flex; align-items: center; font-size: 9px; color: #666460; }
+  .act { margin-left: 8px; width: 22px; height: 22px; flex: none; display: flex; align-items: center; justify-content: center; color: #8f8c87; }
+  .now { position: absolute; top: 0; width: 2px; background: #b4666f; opacity: 0.9; border-radius: 1px; }
+  .add { height: 22px; display: flex; align-items: center; }
+  .addlink { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #5f5d5a; }
+  .ctl { height: 28px; box-sizing: border-box; border: 1px solid rgba(143,140,135,0.4); background: rgba(143,140,135,0.04); display: flex; align-items: center; padding: 0 10px; font-size: 12px; color: #8f8c87; }
+  .ctl.hot { border-color: rgba(143,140,135,0.25); background: rgba(143,140,135,0.08); }
+  .ph { color: #595854; }
+  .cursor { position: absolute; pointer-events: none; }
+  .tip { position: absolute; background: #090907; border: 1px solid #8f8c87; color: #8f8c87; font-size: 10px; padding: 3px 6px; white-space: nowrap; }
+</style>
+</helmet>
+<div style="padding: 28px 28px 24px 28px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start;">
+  <div style="font-size: 11px; color: #5f5d5a; letter-spacing: 1px; text-transform: uppercase;">1 · Idle</div>
+  <div class="card" style="position: relative;">
+    <div class="rows">
+  <div class="row ruler">
+    <div class="hdr" style="flex-direction: row; align-items: center; gap: 6px;">
+      <span class="time" style="color: #8f8c87">@773</span>
+      <span class="sub">BMT Sat 5 Sep</span>
+    </div>
+    <div class="strip"><div class="rcell">@000</div><div class="rcell">050</div><div class="rcell">100</div><div class="rcell">150</div><div class="rcell">200</div><div class="rcell">250</div><div class="rcell">300</div><div class="rcell">350</div><div class="rcell">400</div><div class="rcell">450</div><div class="rcell">500</div><div class="rcell">550</div><div class="rcell">600</div><div class="rcell">650</div><div class="rcell">700</div><div class="rcell">750</div><div class="rcell">800</div><div class="rcell">850</div><div class="rcell">900</div><div class="rcell">950</div></div>
+    <div class="act"></div>
+  </div>
+  <div class="row">
+    <div class="hdr">
+      <div class="l1"><span class="name" style="font-weight: 700">Los Angeles</span><span class="abbr">(PDT)</span></div>
+      <div class="l2"><span style="display:flex; color: #8f8c87"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></span><span class="time" style="color: #8f8c87">10:34</span><span class="sub">Sat 5 Sep</span></div>
+    </div>
+    <div class="strip"><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">16</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">17</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">18</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">19</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">20</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">22</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #8f8c87; font-weight: 700; font-size: 8px;">Sat<br>5</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">0</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">1</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">2</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">4</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">5</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">6</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">7</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">8</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">10</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">11</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">12</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">13</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">14</div></div>
+    <div class="act"></div>
+  </div><div class="row">
+    <div class="hdr">
+      <div class="l1"><span class="name" style="font-weight: 400">East Coast</span><span class="abbr">(EDT)</span></div>
+      <div class="l2"><span style="display:flex; color: #8f8c87"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></span><span class="time" style="color: #8f8c87">13:34</span><span class="sub">+3h</span></div>
+    </div>
+    <div class="strip"><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">19</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">20</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">21</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">22</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #8f8c87; font-weight: 700; font-size: 8px;">Sat<br>5</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">1</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">2</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">3</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">4</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">5</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">7</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">8</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">9</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">10</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">11</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">13</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">14</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">15</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">16</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">17</div></div>
+    <div class="act"></div>
+  </div><div class="row">
+    <div class="hdr">
+      <div class="l1"><span class="name" style="font-weight: 400">Cagayan de Oro</span><span class="abbr">(PHT)</span></div>
+      <div class="l2"><span style="display:flex; color: #8f8c87"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></span><span class="time" style="color: #8f8c87">01:34</span><span class="sub">+15h&nbsp;&nbsp;Sun 6 Sep</span></div>
+    </div>
+    <div class="strip"><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">7</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">8</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">9</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">10</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">11</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">13</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">14</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">15</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">16</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">17</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">19</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">20</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">21</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">22</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #8f8c87; font-weight: 700; font-size: 8px;">Sun<br>6</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">1</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">2</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">3</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">4</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">5</div></div>
+    <div class="act"></div>
+  </div>
+  <div class="now" style="left: 691.7361111111111px; height: 154px;"></div>
+</div>
+<div style="height: 6px"></div>
+<div class="add">
+  <div class="addlink" style="color: #5f5d5a"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M12 5v14M5 12h14"></path></svg><span>Add zone</span></div>
+</div>
+  </div>
+  <div style="font-size: 11px; color: #5f5d5a; max-width: 900px; line-height: 1.5; text-wrap: pretty;">Unchanged layout. The only addition is the muted “+ Add zone” line under the last strip, in the same caption color as the offsets. Home row (bold) never gets a remove control: it tracks the system timezone.</div>
+</div>
+</x-dc>
+</body>
+</html>

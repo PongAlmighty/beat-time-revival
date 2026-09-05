@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.pongalmighty.beattime",
   "name": "Beat Time",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "TheMightyPong",
   "license": "MIT",
   "description": "Swatch Internet Time (.beats) in the bar, with a 1000-beat day/night grid popup showing what each beat means locally for your zones.",

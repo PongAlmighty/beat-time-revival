@@ -95,3 +95,34 @@ test("offset parsing", () => {
 test("plainText strips markup characters", () => {
   assert.equal(M.plainText("<img src=x>&"), "img src=x")
 })
+
+test("timezone list parsing", () => {
+  const list = M.parseTimezoneList("Africa/Abidjan\nAmerica/New_York\n\nbad zone!\nEtc/GMT+5\n")
+  assert.deepEqual(list, ["Africa/Abidjan", "America/New_York", "Etc/GMT+5"])
+})
+
+test("city label and short label defaults", () => {
+  assert.equal(M.cityLabel("America/Argentina/Buenos_Aires"), "Buenos Aires")
+  assert.equal(M.cityLabel("Etc/GMT+5"), "GMT+5")
+  assert.equal(M.shortLabelFor("Asia/Tokyo", "JST"), "JST")
+  assert.equal(M.shortLabelFor("Asia/Dubai", "+04"), "DUB")
+  assert.equal(M.shortLabelFor("America/New_York", ""), "NEW")
+})
+
+test("zone index skips the home row and moveItem reorders", () => {
+  const cfg = [{ zone: "", home: true }, { zone: "A" }, { zone: "B" }, { zone: "C" }]
+  assert.equal(M.zoneIndex(cfg, "B"), 2)
+  assert.equal(M.zoneIndex(cfg, ""), -1)
+  assert.equal(M.zoneIndex(cfg, "Z"), -1)
+  assert.deepEqual(M.moveItem(cfg, 3, 1).map(z => z.zone), ["", "C", "A", "B"])
+  assert.deepEqual(M.moveItem(cfg, 1, 3).map(z => z.zone), ["", "B", "C", "A"])
+  assert.deepEqual(M.moveItem(cfg, 1, 99).map(z => z.zone), ["", "B", "C", "A"])
+  assert.deepEqual(M.moveItem(cfg, 9, 0), cfg)
+})
+
+test("compactParts feeds the ticker", () => {
+  const noonUtc = utc("2025-06-01T12:00:00Z")
+  const zones = [{ home: true, offsetMin: 0 }, { shortLabel: "A", offsetMin: 0 }, { shortLabel: "B", offsetMin: 60 }]
+  assert.deepEqual(M.compactParts(zones, noonUtc, false), ["A 12:00", "B 13:00"])
+  assert.equal(M.compactLabel(zones, noonUtc, false), "A 12:00" + M.SEPARATOR + "B 13:00")
+})
