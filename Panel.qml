@@ -178,6 +178,7 @@ Panel {
     addOpen = false
     editRow = -1
     pendingZone = ""
+    cursorRow = -1
     endDrag()
   }
 
