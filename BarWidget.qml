@@ -6,7 +6,8 @@ import "Model.js" as Model
 
 // Beat-time pill: the current Swatch Internet Time (e.g. "@767") that
 // expands to each configured zone's local time and day/night glyph on
-// hover; left click opens the 1000-beat grid.
+// hover; right click opens the 1000-beat grid (left click is left to the
+// bar/compositor).
 BarWidget {
   id: root
   moduleName: "io.github.pongalmighty.beattime"
@@ -15,7 +16,6 @@ BarWidget {
   // internal Text uses AutoText, which would rich-text-parse a crafted
   // setting.
   readonly property string icon: Model.plainText(setting("icon", ""))
-  readonly property string infoUrl: setting("infoUrl", "https://www.swatch.com/en-us/internet-time.html")
 
   // Set "hoverExpand": false on the widget entry to keep the pill a static
   // beat — the expansion shifts neighboring bar widgets, which not everyone
@@ -110,9 +110,8 @@ BarWidget {
 
     onPressed: function(b) {
       if (!root.bar) return
-      if (b === Qt.RightButton) root.bar.run("omarchy-launch-browser " + Util.shellQuote(root.infoUrl))
+      if (b === Qt.RightButton) root.togglePanel()
       else if (b === Qt.MiddleButton) root.refresh()
-      else root.togglePanel()
     }
   }
 

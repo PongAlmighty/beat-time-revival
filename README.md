@@ -22,7 +22,7 @@ Derived from Simon Späti's
 - **Bar pill**: the current beat, e.g. `@767`. Hover and it expands to each
   configured zone's local time with a day/night glyph, e.g.
   `󰖙 NY 07:12 · 󰖔 CDO 23:12`.
-- **Popup** (left click): a 1000-beat ruler across the top, then one strip
+- **Popup** (right click): a 1000-beat ruler across the top, then one strip
   per zone. Each cell shows the local hour at that beat span, tinted by
   business hours (accent), waking hours (light), and night (dark). Where a
   zone's local midnight falls, the cell carries the new day's label. A line
@@ -50,10 +50,10 @@ omarchy plugin add https://github.com/PongAlmighty/beat-time-revival.git --enabl
 ## Usage
 
 - **Hover** the beat: compact view of your zones' local times
-- **Left click**: open/close the beat grid (Escape also closes)
+- **Right click**: open/close the beat grid (Escape also closes)
 - **Hover a beat** in the popup: converts that beat across all zones
 - **Middle click**: refresh timezone offsets
-- **Right click**: open the Swatch Internet Time page in the browser
+- **Left click**: unused, left to the bar and compositor
 
 ## Configure
 
@@ -98,7 +98,6 @@ save). Example:
 - `icon` — optional glyph drawn before the beat in the bar. Default none.
 - `hoverExpand` — set `false` to keep the bar pill static instead of
   expanding on hover. Default `true`.
-- `infoUrl` — right-click target. Default is Swatch's Internet Time page.
 
 Move it in the bar:
 

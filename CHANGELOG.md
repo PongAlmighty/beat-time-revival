@@ -11,3 +11,4 @@
   zone showing the local hour at each beat span, tinted work/day/night, with
   local-midnight day boundaries marked and a "now" line at the exact beat.
 - Hover any beat to convert it to local time in every zone.
+- Right click toggles the popup; left click is left to the bar.
