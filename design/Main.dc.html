@@ -14,7 +14,7 @@
   .card { position: relative; background: #090907; border: 2px solid #b4666f; padding: 14px; display: inline-block; }
   .rows { display: flex; flex-direction: column; gap: 6px; position: relative; }
   .row { display: flex; align-items: center; height: 38px; }
-  .ruler { height: 22px; }
+  .ruler { height: 26px; }
   .hdr { width: 168px; flex: none; display: flex; flex-direction: column; gap: 2px; }
   .hdr .l1 { display: flex; align-items: center; gap: 6px; }
   .hdr .l2 { display: flex; align-items: center; gap: 6px; }
@@ -24,10 +24,10 @@
   .sub { font-size: 10px; color: #5f5d5a; }
   .strip { margin-left: 14px; width: 660px; flex: none; display: flex; gap: 1px; }
   .cell { width: 32.05px; height: 38px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 10px; line-height: 0.85; text-align: center; }
-  .rcell { width: 32.05px; height: 22px; display: flex; align-items: center; font-size: 9px; color: #666460; }
+  .rcell { width: 32.05px; height: 26px; display: flex; align-items: center; font-size: 10px; font-weight: 700; color: #8f8c87; }
   .act { margin-left: 8px; width: 22px; height: 22px; flex: none; display: flex; align-items: center; justify-content: center; color: #8f8c87; }
   .now { position: absolute; top: 0; width: 2px; background: #b4666f; opacity: 0.9; border-radius: 1px; }
-  .add { height: 22px; display: flex; align-items: center; }
+  .add { height: 26px; display: flex; align-items: center; }
   .addlink { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #5f5d5a; }
   .ctl { height: 28px; box-sizing: border-box; border: 1px solid rgba(143,140,135,0.4); background: rgba(143,140,135,0.04); display: flex; align-items: center; padding: 0 10px; font-size: 12px; color: #8f8c87; }
   .ctl.hot { border-color: rgba(143,140,135,0.25); background: rgba(143,140,135,0.08); }
@@ -42,8 +42,8 @@
     <div class="rows">
   <div class="row ruler">
     <div class="hdr" style="flex-direction: row; align-items: center; gap: 6px;">
-      <span class="time" style="color: #8f8c87">@773</span>
-      <span class="sub">Internet Time</span>
+      <span class="time" style="font-size: 14px; color: #8f8c87">@773</span>
+      <span class="sub" style="font-size: 11px; color: #8f8c87">Internet Time</span>
     </div>
     <div class="strip"><div class="rcell">@000</div><div class="rcell">050</div><div class="rcell">100</div><div class="rcell">150</div><div class="rcell">200</div><div class="rcell">250</div><div class="rcell">300</div><div class="rcell">350</div><div class="rcell">400</div><div class="rcell">450</div><div class="rcell">500</div><div class="rcell">550</div><div class="rcell">600</div><div class="rcell">650</div><div class="rcell">700</div><div class="rcell">750</div><div class="rcell">800</div><div class="rcell">850</div><div class="rcell">900</div><div class="rcell">950</div></div>
     <div class="act"></div>
@@ -70,7 +70,7 @@
     <div class="strip"><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">7</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">8</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">9</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">10</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">11</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">13</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">14</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">15</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">16</div><div class="cell" style="background: rgba(180,102,111,0.28); color: #8f8c87; font-weight: 400; font-size: 10px;">17</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">19</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">20</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">21</div><div class="cell" style="background: rgba(143,140,135,0.1); color: #8f8c87; font-weight: 400; font-size: 10px;">22</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #8f8c87; font-weight: 700; font-size: 8px;">Sun<br>6</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">1</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">2</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">3</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">4</div><div class="cell" style="background: rgba(143,140,135,0.035); color: #595854; font-weight: 400; font-size: 10px;">5</div></div>
     <div class="act"></div>
   </div>
-  <div class="now" style="left: 691.7361111111111px; height: 154px;"></div>
+  <div class="now" style="left: 691.7361111111111px; height: 158px;"></div>
 </div>
 <div style="height: 6px"></div>
 <div class="add">

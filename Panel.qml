@@ -140,7 +140,7 @@ Panel {
   readonly property real cellGap: 1
   readonly property real cellW: (stripW - (columns - 1) * cellGap) / columns
   readonly property real cellH: Style.space(38)
-  readonly property real rulerH: Style.space(22)
+  readonly property real rulerH: Style.space(26)
   readonly property real headerW: Style.space(168)
   readonly property real headerGap: Style.space(14)
   readonly property real rowGap: Style.space(6)
@@ -480,20 +480,22 @@ Panel {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Style.space(6)
 
+            // The ruler is the anchor everything else relates to, so it
+            // reads a step larger and brighter than the zone rows.
             Text {
               text: root.hoverBeat >= 0 ? "@" + (root.hoverBeat < 10 ? "00" : root.hoverBeat < 100 ? "0" : "") + root.hoverBeat : root.beatLabel
               color: root.hoverBeat >= 0 ? Color.accent : root.fg
               font.family: root.fontFam
-              font.pixelSize: Style.font.body
+              font.pixelSize: Style.font.title
               font.bold: true
             }
             // Names the system, not a zone: a beat is the same everywhere.
             // Each row marks its own local midnight, so no date is needed.
             Text {
               text: "Internet Time"
-              color: Qt.darker(root.fg, 1.5)
+              color: root.fg
               font.family: root.fontFam
-              font.pixelSize: Style.font.caption
+              font.pixelSize: Style.font.bodySmall
               anchors.verticalCenter: parent.verticalCenter
             }
           }
@@ -515,9 +517,10 @@ Panel {
                   anchors.left: parent.left
                   anchors.verticalCenter: parent.verticalCenter
                   text: Model.rulerLabel(parent.index, root.beatsPerCell)
-                  color: Qt.darker(root.fg, 1.4)
+                  color: root.fg
                   font.family: root.fontFam
-                  font.pixelSize: Style.font.caption - 1
+                  font.pixelSize: Style.font.caption
+                  font.bold: true
                 }
               }
             }

@@ -23,7 +23,7 @@ const alpha = (hex, a) => {
 }
 const FG15 = darker(FG, 1.5), FG14 = darker(FG, 1.4), FG16 = darker(FG, 1.6)
 
-const cellW = (660 - 19) / 20, cellH = 38, rulerH = 22, headerW = 168, headerGap = 14, rowGap = 6
+const cellW = (660 - 19) / 20, cellH = 38, rulerH = 26, headerW = 168, headerGap = 14, rowGap = 6
 const actionGap = 8, actionW = 22
 const stripX = headerW + headerGap
 const stripW = 660
@@ -66,7 +66,7 @@ const css = `
   .sub { font-size: 10px; color: ${FG15}; }
   .strip { margin-left: ${headerGap}px; width: ${stripW}px; flex: none; display: flex; gap: 1px; }
   .cell { width: ${cellW}px; height: ${cellH}px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 10px; line-height: 0.85; text-align: center; }
-  .rcell { width: ${cellW}px; height: ${rulerH}px; display: flex; align-items: center; font-size: 9px; color: ${FG14}; }
+  .rcell { width: ${cellW}px; height: ${rulerH}px; display: flex; align-items: center; font-size: 10px; font-weight: 700; color: ${FG}; }
   .act { margin-left: ${actionGap}px; width: ${actionW}px; height: ${actionW}px; flex: none; display: flex; align-items: center; justify-content: center; color: ${FG}; }
   .now { position: absolute; top: 0; width: 2px; background: ${ACCENT}; opacity: 0.9; border-radius: 1px; }
   .add { height: ${rulerH}px; display: flex; align-items: center; }
@@ -82,8 +82,8 @@ const rulerRow = (hover) => {
   const cells = Array.from({ length: 20 }, (_, i) => `<div class="rcell">${M.rulerLabel(i, 50)}</div>`).join("")
   return `<div class="row ruler">
     <div class="hdr" style="flex-direction: row; align-items: center; gap: 6px;">
-      <span class="time" style="color: ${hover ? ACCENT : FG}">${hover ? "@" + String(hover).padStart(3, "0") : M.beatLabel(nowUtc)}</span>
-      <span class="sub">Internet Time</span>
+      <span class="time" style="font-size: 14px; color: ${hover ? ACCENT : FG}">${hover ? "@" + String(hover).padStart(3, "0") : M.beatLabel(nowUtc)}</span>
+      <span class="sub" style="font-size: 11px; color: ${FG}">Internet Time</span>
     </div>
     <div class="strip">${cells}</div>
     <div class="act"></div>
