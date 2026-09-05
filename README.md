@@ -160,6 +160,20 @@ whole-second precision, so a beat turns over at exactly 86.4 s rather than
 on the next whole second. The reference test vectors pass either way; see
 `test/model.test.js` (`node --test test/`).
 
+## What it runs and touches
+
+No network, no daemon, no elevated privileges, no external packages.
+
+- Reads the clock and tzdata through `date` and `timedatectl` (`TZ=<zone>
+  date +'%z %Z'` per configured zone, `timedatectl list-timezones` for the
+  picker). Zone names are validated against `[A-Za-z0-9_/+-]` before they
+  reach a shell.
+- Writes only the widget's own entry in `~/.config/omarchy/shell.json`, and
+  only through the shell's `updateEntryInline` API, when you edit zones in
+  the popup or over IPC. Nothing else in your configuration is touched.
+- Runs inside the Omarchy shell process like every plugin, with your user's
+  permissions.
+
 ## Remove
 
 ```sh
