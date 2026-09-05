@@ -4,26 +4,30 @@ import qs.Commons
 import qs.Ui
 import "Model.js" as Model
 
-// World-clock pill: a globe icon that expands to the client zones' current
-// times on hover; left click opens the worldtimebuddy-style hour grid.
+// Beat-time pill: the current Swatch Internet Time (e.g. "@767") that
+// expands to each configured zone's local time and day/night glyph on
+// hover; left click opens the 1000-beat grid.
 BarWidget {
   id: root
-  moduleName: "io.github.sspaeti.timezones"
+  moduleName: "io.github.pongalmighty.beattime"
 
-  // Sanitized because WidgetButton's internal Text uses AutoText, which
-  // would rich-text-parse a crafted setting. See README's Configure section
-  // for why this glyph rather than the plain earth/globe ones, and for other
-  // icon choices.
-  readonly property string icon: Model.plainText(setting("icon", "󱉊"))
-  readonly property string wtbUrl: setting("worldtimebuddyUrl", "https://www.worldtimebuddy.com/pdt-to-switzerland-bern")
+  // Optional glyph in front of the beat. Sanitized because WidgetButton's
+  // internal Text uses AutoText, which would rich-text-parse a crafted
+  // setting.
+  readonly property string icon: Model.plainText(setting("icon", ""))
+  readonly property string infoUrl: setting("infoUrl", "https://www.swatch.com/en-us/internet-time.html")
 
   // Set "hoverExpand": false on the widget entry to keep the pill a static
-  // icon — the expansion shifts neighboring bar widgets, which not everyone
+  // beat — the expansion shifts neighboring bar widgets, which not everyone
   // wants.
   readonly property bool hoverExpand: setting("hoverExpand", true) === true
 
+  readonly property string beat: panelLoader.item ? panelLoader.item.beatLabel : "@···"
   readonly property string compact: panelLoader.item ? panelLoader.item.compactLabel : ""
   readonly property bool expanded: hoverExpand && !vertical && button.tooltipHovered && compact !== ""
+
+  // Vertical bars stack the beat one character per line, like the clock.
+  readonly property var verticalLines: beat.split("")
 
   function injectPanel() {
     var target = panelLoader.item
@@ -81,7 +85,7 @@ BarWidget {
   }
 
   IpcHandler {
-    target: "io.github.sspaeti.timezones"
+    target: "io.github.pongalmighty.beattime"
 
     function open(): void { root.open() }
     function close(): void { root.close() }
@@ -95,33 +99,49 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    // Keep WidgetButton as the interaction surface, but draw the icon and
-    // expanding label separately so centering a longer string cannot move the
-    // icon. The button grows only to the right of the icon's fixed position.
+    // Keep WidgetButton as the interaction surface, but draw the beat and
+    // expanding label separately so centering a longer string cannot move
+    // the beat. The button grows only to the right of its fixed position.
     text: " "
-    fixedWidth: labelRow.implicitWidth + scaledHorizontalMargin * 2
+    fixedWidth: root.vertical ? -1 : labelRow.implicitWidth + scaledHorizontalMargin * 2
+    fixedHeight: root.vertical ? verticalCol.implicitHeight + scaledVerticalPadding * 2 : -1
     foreground: "transparent"
     tooltipText: ""
 
     onPressed: function(b) {
       if (!root.bar) return
-      if (b === Qt.RightButton) root.bar.run("omarchy-launch-browser " + Util.shellQuote(root.wtbUrl))
+      if (b === Qt.RightButton) root.bar.run("omarchy-launch-browser " + Util.shellQuote(root.infoUrl))
       else if (b === Qt.MiddleButton) root.refresh()
       else root.togglePanel()
     }
   }
 
+  readonly property color labelColor: button.active && button.useActiveColor
+    ? button.activeColor
+    : (root.bar ? root.bar.barForeground : Color.foreground)
+
   Row {
     id: labelRow
+    visible: !root.vertical
     anchors.left: button.left
     anchors.leftMargin: button.scaledHorizontalMargin
     anchors.verticalCenter: button.verticalCenter
     spacing: root.expanded ? Style.space(8) : 0
 
     Text {
-      text: root.icon
+      visible: root.icon !== ""
+      text: root.icon + " "
       textFormat: Text.PlainText
-      color: button.active && button.useActiveColor ? button.activeColor : (root.bar ? root.bar.barForeground : Color.foreground)
+      color: root.labelColor
+      font.family: button.fontFamily
+      font.pixelSize: button.fontSize
+      renderType: Text.NativeRendering
+    }
+
+    Text {
+      text: root.beat
+      textFormat: Text.PlainText
+      color: root.labelColor
       font.family: button.fontFamily
       font.pixelSize: button.fontSize
       renderType: Text.NativeRendering
@@ -131,10 +151,32 @@ BarWidget {
       visible: root.expanded
       text: root.compact
       textFormat: Text.PlainText
-      color: button.active && button.useActiveColor ? button.activeColor : (root.bar ? root.bar.barForeground : Color.foreground)
+      color: root.labelColor
       font.family: button.fontFamily
       font.pixelSize: button.fontSize
       renderType: Text.NativeRendering
+    }
+  }
+
+  Column {
+    id: verticalCol
+    visible: root.vertical
+    anchors.centerIn: button
+    spacing: 0
+
+    Repeater {
+      model: root.vertical ? root.verticalLines : []
+
+      Text {
+        required property string modelData
+        text: modelData
+        textFormat: Text.PlainText
+        horizontalAlignment: Text.AlignHCenter
+        color: root.labelColor
+        font.family: button.fontFamily
+        font.pixelSize: button.fontSize
+        renderType: Text.NativeRendering
+      }
     }
   }
 }

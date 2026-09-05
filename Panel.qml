@@ -5,12 +5,15 @@ import qs.Commons
 import qs.Ui
 import "Model.js" as Model
 
-// Worldtimebuddy-style popup: one 24-hour strip per zone, columns aligned on
-// the same absolute moment, with a "now" line and hover-a-column conversion.
+// Beat-grid popup: a 1000-beat ruler across the top, then one strip per
+// zone showing what local hour each beat span is there, tinted by
+// work/day/night so "is @330 the middle of the night for them?" reads at a
+// glance. A "now" line marks the current beat; hovering any point converts
+// that beat to local time in every row.
 Panel {
   id: root
-  moduleName: "io.github.sspaeti.timezones"
-  ipcTarget: "io.github.sspaeti.timezones"
+  moduleName: "io.github.pongalmighty.beattime"
+  ipcTarget: "io.github.pongalmighty.beattime"
   manageIpc: false
 
   property var anchorItem: null
@@ -72,6 +75,10 @@ Panel {
   // (or with none configured) the home row is labeled by where the system
   // clock actually is, so traveling relabels it automatically.
   readonly property var homeZoneNames: setting("homeZones", [])
+  readonly property bool centibeats: setting("centibeats", false) === true
+  readonly property bool glyphs: setting("glyphs", true) === true
+  readonly property int beatsPerCell: Model.cellSize(setting("beatsPerCell", 50))
+  readonly property int columns: 1000 / beatsPerCell
   readonly property color fg: bar ? bar.foreground : "#e0e0e0"
   readonly property string fontFam: bar ? bar.fontFamily : Style.font.family
 
@@ -106,22 +113,31 @@ Panel {
     return null
   }
   readonly property bool ready: homeRow !== null && homeRow.offsetMin !== null
-  readonly property double dayStart: ready ? Model.homeDayStartUtc(nowUtc, homeRow.offsetMin) : 0
-  readonly property double nowCol: ready ? Model.nowColumn(nowUtc, dayStart) : 0
-  readonly property string homeDate: ready ? Model.dateLabel(nowUtc, homeRow.offsetMin) : ""
-  property int hoverCol: -1
+
+  // Beats need no zone: the label is live before the tzdata probe returns.
+  readonly property string beatLabel: Model.beatLabel(nowUtc, centibeats)
+  readonly property double dayStart: Model.bielDayStartUtc(nowUtc)
+  readonly property double nowBeats: Model.beatsAt(nowUtc)
+  // Biel's own calendar day — the day the ruler spans.
+  readonly property string bielDate: Model.dateLabel(nowUtc, 60)
+
+  // Hovered beat (whole), or -1. The moment every row converts when set.
+  property int hoverBeat: -1
+  readonly property double focusUtc: hoverBeat >= 0 ? Model.beatToUtc(dayStart, hoverBeat) : nowUtc
 
   // What the bar pill shows on hover.
-  readonly property string compactLabel: ready ? Model.compactLabel(zones, nowUtc) : ""
+  readonly property string compactLabel: ready ? Model.compactLabel(zones, nowUtc, glyphs) : ""
 
   // ---- Grid geometry.
-  readonly property real cellW: Style.space(27)
-  readonly property real cellH: Style.space(38)
+  readonly property real stripW: Style.space(660)
   readonly property real cellGap: 1
+  readonly property real cellW: (stripW - (columns - 1) * cellGap) / columns
+  readonly property real cellH: Style.space(38)
+  readonly property real rulerH: Style.space(22)
   readonly property real headerW: Style.space(168)
   readonly property real headerGap: Style.space(14)
-  readonly property real stripW: 24 * cellW + 23 * cellGap
   readonly property real rowGap: Style.space(6)
+  readonly property real stripX: headerW + headerGap
 
   function refresh() {
     var script = "echo \"TZNAME $(timedatectl show -p Timezone --value 2>/dev/null)\"; echo \"HOME $(date +'%z %Z')\""
@@ -149,15 +165,17 @@ Panel {
     }
   }
 
-  // Offsets can only change at wall-clock hour boundaries (DST switches) or
-  // when the clock jumps (suspend/resume, timezone changed while traveling),
-  // so re-probe exactly then rather than on a polling interval.
+  // A beat lasts 86.4 s, so the label needs second precision to turn over on
+  // time. Offsets can only change at wall-clock hour boundaries (DST
+  // switches) or when the clock jumps (suspend/resume, timezone changed
+  // while traveling), so re-probe exactly then rather than every tick.
   SystemClock {
-    precision: SystemClock.Minutes
+    precision: SystemClock.Seconds
     onDateChanged: {
       var previous = root.nowUtc
       root.nowUtc = date.getTime()
-      if (date.getMinutes() === 0 || Math.abs(root.nowUtc - previous) > 120000)
+      var jumped = Math.abs(root.nowUtc - previous) > 120000
+      if ((date.getMinutes() === 0 && date.getSeconds() === 0) || jumped)
         root.refresh()
     }
   }
@@ -175,7 +193,7 @@ Panel {
     // contentWidth is the card's outer width: unlike fittedContentHeight,
     // fittedContentWidth does not add the padding/border inset, so add it
     // here or the last column gets clipped.
-    contentWidth: panel.fittedContentWidth(root.headerW + root.headerGap + root.stripW + panel.verticalContentInset)
+    contentWidth: panel.fittedContentWidth(root.stripX + root.stripW + panel.verticalContentInset)
     contentHeight: panel.fittedContentHeight(rowsCol.implicitHeight)
 
     PanelKeyCatcher {
@@ -188,6 +206,58 @@ Panel {
         id: rowsCol
         width: parent.width
         spacing: root.rowGap
+
+        // ---- Ruler row: the beat itself, plus @000…@950 column starts.
+        Item {
+          width: rowsCol.width
+          height: root.rulerH
+
+          Row {
+            width: root.headerW
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Style.space(6)
+
+            Text {
+              text: root.hoverBeat >= 0 ? "@" + (root.hoverBeat < 10 ? "00" : root.hoverBeat < 100 ? "0" : "") + root.hoverBeat : root.beatLabel
+              color: root.hoverBeat >= 0 ? Color.accent : root.fg
+              font.family: root.fontFam
+              font.pixelSize: Style.font.body
+              font.bold: true
+            }
+            Text {
+              text: "BMT " + root.bielDate
+              color: Qt.darker(root.fg, 1.5)
+              font.family: root.fontFam
+              font.pixelSize: Style.font.caption
+              anchors.verticalCenter: parent.verticalCenter
+            }
+          }
+
+          Row {
+            x: root.stripX
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: root.cellGap
+
+            Repeater {
+              model: root.columns
+
+              Item {
+                required property int index
+                width: root.cellW
+                height: root.rulerH
+
+                Text {
+                  anchors.left: parent.left
+                  anchors.verticalCenter: parent.verticalCenter
+                  text: Model.rulerLabel(parent.index, root.beatsPerCell)
+                  color: Qt.darker(root.fg, 1.4)
+                  font.family: root.fontFam
+                  font.pixelSize: Style.font.caption - 1
+                }
+              }
+            }
+          }
+        }
 
         Text {
           visible: !root.ready
@@ -206,11 +276,12 @@ Panel {
             required property var modelData
             readonly property var zoneRow: modelData
             readonly property bool rowReady: zoneRow.offsetMin !== null
-            readonly property string zoneDate: rowReady ? Model.dateLabel(root.nowUtc, zoneRow.offsetMin) : ""
+            readonly property string zoneDate: rowReady ? Model.dateLabel(root.focusUtc, zoneRow.offsetMin) : ""
+            readonly property string homeDate: Model.dateLabel(root.focusUtc, root.homeRow.offsetMin)
             width: rowsCol.width
             height: root.cellH
 
-            // ---- Row header: location name, (abbr), current time, offset.
+            // ---- Row header: location name, (abbr), local time, offset.
             Column {
               width: root.headerW
               anchors.verticalCenter: parent.verticalCenter
@@ -242,23 +313,27 @@ Panel {
                 spacing: Style.space(6)
 
                 Text {
-                  text: !zoneItem.rowReady ? "—"
-                    : root.hoverCol >= 0
-                      ? Model.timeLabel(root.dayStart + root.hoverCol * 3600000, zoneItem.zoneRow.offsetMin)
-                      : Model.timeLabel(root.nowUtc, zoneItem.zoneRow.offsetMin)
-                  color: root.hoverCol >= 0 ? Color.accent : root.fg
+                  visible: root.glyphs && zoneItem.rowReady
+                  text: zoneItem.rowReady ? Model.dayNightGlyph(root.focusUtc, zoneItem.zoneRow.offsetMin) : ""
+                  color: root.hoverBeat >= 0 ? Color.accent : root.fg
+                  font.family: root.fontFam
+                  font.pixelSize: Style.font.body
+                }
+                Text {
+                  text: zoneItem.rowReady ? Model.timeLabel(root.focusUtc, zoneItem.zoneRow.offsetMin) : "—"
+                  color: root.hoverBeat >= 0 ? Color.accent : root.fg
                   font.family: root.fontFam
                   font.pixelSize: Style.font.body
                   font.bold: true
                 }
                 Text {
-                  // Home shows its date; others their offset, plus the date
-                  // whenever their calendar day differs from home's.
+                  // Home shows its date; others their offset from home, plus
+                  // the date whenever their calendar day differs from home's.
                   text: zoneItem.zoneRow.home
                     ? zoneItem.zoneDate
                     : (zoneItem.rowReady
                         ? Model.diffLabel(zoneItem.zoneRow.offsetMin, root.homeRow.offsetMin)
-                          + (zoneItem.zoneDate !== root.homeDate ? "  " + zoneItem.zoneDate : "")
+                          + (zoneItem.zoneDate !== zoneItem.homeDate ? "  " + zoneItem.zoneDate : "")
                         : "")
                   color: Qt.darker(root.fg, 1.5)
                   font.family: root.fontFam
@@ -268,19 +343,20 @@ Panel {
               }
             }
 
-            // ---- Hour strip: 24 cells, one home-day left to right.
+            // ---- Beat strip: one Biel day left to right, each cell the
+            //      zone's local hour at that beat span.
             Row {
-              x: root.headerW + root.headerGap
+              x: root.stripX
               anchors.verticalCenter: parent.verticalCenter
               spacing: root.cellGap
 
               Repeater {
-                model: zoneItem.rowReady ? 24 : 0
+                model: zoneItem.rowReady ? root.columns : 0
 
                 Rectangle {
                   required property int index
-                  readonly property var c: Model.cell(index, root.dayStart, zoneItem.zoneRow.offsetMin)
-                  readonly property bool hot: index === root.hoverCol
+                  readonly property var c: Model.cell(index, root.beatsPerCell, root.dayStart, zoneItem.zoneRow.offsetMin)
+                  readonly property bool hot: root.hoverBeat >= 0 && Math.floor(root.hoverBeat / root.beatsPerCell) === index
                   width: root.cellW
                   height: root.cellH
                   radius: Style.space(3)
@@ -307,10 +383,9 @@ Panel {
         }
       }
 
-      // ---- "Now" line across all rows.
+      // ---- "Now" line across ruler and all rows, at the exact beat.
       Rectangle {
-        visible: root.ready
-        x: root.headerW + root.headerGap + root.nowCol * (root.cellW + root.cellGap) - 1
+        x: root.stripX + root.nowBeats / 1000 * root.stripW - 1
         y: 0
         width: 2
         height: rowsCol.height
@@ -319,19 +394,19 @@ Panel {
         opacity: 0.9
       }
 
-      // ---- Hover-a-column conversion: every header time switches to that
-      //      column's moment, answering "10am there is what here?" directly.
+      // ---- Hover conversion: every row's header switches to the local
+      //      time at the hovered beat, answering "@330 is what for them?".
       MouseArea {
-        x: root.headerW + root.headerGap
+        x: root.stripX
         y: 0
         width: root.stripW
         height: rowsCol.height
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
         onPositionChanged: function(mouse) {
-          root.hoverCol = Math.max(0, Math.min(23, Math.floor(mouse.x / (root.cellW + root.cellGap))))
+          root.hoverBeat = Math.max(0, Math.min(999, Math.floor(mouse.x / root.stripW * 1000)))
         }
-        onExited: root.hoverCol = -1
+        onExited: root.hoverBeat = -1
       }
     }
   }

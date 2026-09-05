@@ -1,6 +1,56 @@
-// Pure timezone/formatting logic for the timezones widget. All math works on
-// UTC-offset minutes fetched from tzdata via `date`; no Date-local calls, so
-// the same instant renders consistently for every configured zone.
+// Pure time/formatting logic for the beat-time widget. Swatch Internet Time
+// has no zones — one beat is the same everywhere — so the grid axis is the
+// 1000-beat Biel day and each configured zone is projected onto it. Zone
+// math works on UTC-offset minutes fetched from tzdata via `date`; no
+// Date-local calls, so the same instant renders consistently everywhere.
+//
+// Canonical definition (github.com/swatchtime/sample-code):
+//   reference zone: Biel Mean Time = UTC+1, fixed, no DST
+//   1 beat = 86.4 s (86400 / 1000); @000 at Biel midnight, @999 just before.
+
+var DAY_MS = 86400000
+var BEAT_MS = 86400            // 86.4 s
+var BIEL_OFFSET_MS = 3600000   // UTC+1
+
+function mod(n, m) {
+  return ((n % m) + m) % m
+}
+
+// Fractional beats in [0, 1000) for a UTC instant.
+function beatsAt(utcMs) {
+  return mod(utcMs + BIEL_OFFSET_MS, DAY_MS) / BEAT_MS
+}
+
+// Whole beat, 0..999.
+function beatAt(utcMs) {
+  return Math.floor(beatsAt(utcMs)) % 1000
+}
+
+function pad3(n) {
+  return (n < 10 ? "00" : n < 100 ? "0" : "") + n
+}
+
+// "@767" — or "@767.42" with centibeats. Rounds to 2 decimals *before*
+// wrapping so 999.995 shows "@000.00", never "@1000.00".
+function beatLabel(utcMs, centibeats) {
+  if (!centibeats) return "@" + pad3(beatAt(utcMs))
+  var rounded = Math.round(beatsAt(utcMs) * 100) / 100
+  if (rounded >= 1000) rounded -= 1000
+  var whole = Math.floor(rounded)
+  var frac = Math.round((rounded - whole) * 100)
+  return "@" + pad3(whole) + "." + (frac < 10 ? "0" : "") + frac
+}
+
+// UTC ms of the most recent Biel midnight (23:00 UTC) — beat @000, column 0.
+function bielDayStartUtc(nowUtcMs) {
+  var biel = nowUtcMs + BIEL_OFFSET_MS
+  return biel - mod(biel, DAY_MS) - BIEL_OFFSET_MS
+}
+
+// UTC ms of a (possibly fractional) beat on the given Biel day.
+function beatToUtc(dayStartUtcMs, beats) {
+  return dayStartUtcMs + beats * BEAT_MS
+}
 
 // "+0200" / "-0930" → signed minutes east of UTC.
 function parseUtcOffset(text) {
@@ -24,13 +74,6 @@ function parseOffsetLines(text) {
   return result
 }
 
-// UTC ms of the home zone's most recent local midnight — column 0 of the grid.
-function homeDayStartUtc(nowUtcMs, homeOffsetMin) {
-  var dayMs = 24 * 3600000
-  var localMs = nowUtcMs + homeOffsetMin * 60000
-  return localMs - (((localMs % dayMs) + dayMs) % dayMs) - homeOffsetMin * 60000
-}
-
 // Local wall-clock fields of a UTC instant in a fixed-offset zone.
 function localFields(utcMs, offsetMin) {
   var d = new Date(utcMs + offsetMin * 60000)
@@ -44,16 +87,14 @@ function localFields(utcMs, offsetMin) {
 }
 
 var WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-// One grid cell: the zone-local hour at home-day column `col`.
-function cell(col, dayStartUtcMs, offsetMin) {
-  var f = localFields(dayStartUtcMs + col * 3600000, offsetMin)
-  return {
-    hour: f.hour,
-    isMidnight: f.hour === 0,
-    dayLabel: WEEKDAYS[f.weekday] + " " + f.day,
-    tint: tintFor(f.hour)
-  }
+// Grid granularity: beats per column. Anything that does not divide 1000
+// evenly falls back to 50 (20 columns of 72 minutes each).
+var CELL_SIZES = [25, 40, 50, 100, 125, 200]
+function cellSize(value) {
+  var n = parseInt(value, 10)
+  return CELL_SIZES.indexOf(n) === -1 ? 50 : n
 }
 
 // Visual band for a cell: business hours pop, waking hours mid, night dark.
@@ -61,6 +102,33 @@ function tintFor(hour) {
   if (hour >= 8 && hour < 18) return "work"
   if (hour >= 6 && hour < 23) return "day"
   return "night"
+}
+
+// One zone cell: the local hour at the start of the beat span
+// [col*size, (col+1)*size). If the zone's local midnight falls inside the
+// span, the cell is a day boundary and carries the new day's label instead.
+function cell(col, size, dayStartUtcMs, offsetMin) {
+  var startUtc = beatToUtc(dayStartUtcMs, col * size)
+  var endUtc = beatToUtc(dayStartUtcMs, (col + 1) * size)
+  var localStart = startUtc + offsetMin * 60000
+  var localEnd = endUtc + offsetMin * 60000
+  // A midnight k*DAY lies in [localStart, localEnd) iff the day index of
+  // (localEnd - 1) exceeds that of (localStart - 1).
+  var crossesMidnight = Math.floor((localEnd - 1) / DAY_MS) > Math.floor((localStart - 1) / DAY_MS)
+  var f = localFields(startUtc, offsetMin)
+  var dayFields = localFields(endUtc - 1, offsetMin)
+  return {
+    hour: f.hour,
+    isMidnight: crossesMidnight,
+    dayLabel: WEEKDAYS[dayFields.weekday] + " " + dayFields.day,
+    tint: tintFor(f.hour)
+  }
+}
+
+// Ruler cell: the beat at which the column starts, e.g. "@000", "050".
+function rulerLabel(col, size) {
+  var b = col * size
+  return col === 0 ? "@000" : pad3(b)
 }
 
 // Configurable strings (icon, labels, abbreviations) are rendered by Text
@@ -75,16 +143,15 @@ function pad2(n) {
   return (n < 10 ? "0" : "") + n
 }
 
-// "07:12" for a zone right now.
-function timeLabel(nowUtcMs, offsetMin) {
-  var f = localFields(nowUtcMs, offsetMin)
+// "07:12" for a zone at a UTC instant.
+function timeLabel(utcMs, offsetMin) {
+  var f = localFields(utcMs, offsetMin)
   return pad2(f.hour) + ":" + pad2(f.minute)
 }
 
-// "Thu 21 Aug" style date for the row header.
-var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-function dateLabel(nowUtcMs, offsetMin) {
-  var f = localFields(nowUtcMs, offsetMin)
+// "Thu 21 Aug" style date.
+function dateLabel(utcMs, offsetMin) {
+  var f = localFields(utcMs, offsetMin)
   return WEEKDAYS[f.weekday] + " " + f.day + " " + MONTHS[f.month]
 }
 
@@ -99,18 +166,22 @@ function diffLabel(offsetMin, homeOffsetMin) {
   return sign + (m === 0 ? h + "h" : h + ":" + pad2(m))
 }
 
-// Fractional column position of "now" for the vertical indicator, in [0, 24).
-function nowColumn(nowUtcMs, dayStartUtcMs) {
-  return (nowUtcMs - dayStartUtcMs) / 3600000
+// Day/night glyph for a zone at a UTC instant (Nerd Font md-weather_sunny /
+// md-weather_night). Night is the "asleep" band; work and day both read as
+// awake, which is the question the bar label answers.
+function dayNightGlyph(utcMs, offsetMin) {
+  return tintFor(localFields(utcMs, offsetMin).hour) === "night" ? "󰖔" : "󰖙"
 }
 
-// Compact bar label shown on hover: "NY 07:12 · SF 04:12 · CDO 19:12".
-function compactLabel(zones, nowUtcMs) {
+// Compact bar label shown on hover: "󰖙 NY 07:12 · 󰖔 CDO 19:12".
+function compactLabel(zones, nowUtcMs, glyphs) {
   var parts = []
   for (var i = 0; i < zones.length; i++) {
     var z = zones[i]
     if (z.home || z.offsetMin === undefined || z.offsetMin === null) continue
-    parts.push(plainText(z.shortLabel) + " " + timeLabel(nowUtcMs, z.offsetMin))
+    var s = plainText(z.shortLabel) + " " + timeLabel(nowUtcMs, z.offsetMin)
+    if (glyphs) s = dayNightGlyph(nowUtcMs, z.offsetMin) + " " + s
+    parts.push(s)
   }
   return parts.join(" · ")
 }
@@ -128,16 +199,24 @@ function defaultZones() {
 
 if (typeof module !== "undefined") {
   module.exports = {
+    DAY_MS: DAY_MS,
+    BEAT_MS: BEAT_MS,
+    beatsAt: beatsAt,
+    beatAt: beatAt,
+    beatLabel: beatLabel,
+    bielDayStartUtc: bielDayStartUtc,
+    beatToUtc: beatToUtc,
     parseUtcOffset: parseUtcOffset,
     parseOffsetLines: parseOffsetLines,
-    homeDayStartUtc: homeDayStartUtc,
     localFields: localFields,
+    cellSize: cellSize,
     cell: cell,
+    rulerLabel: rulerLabel,
     tintFor: tintFor,
     timeLabel: timeLabel,
     dateLabel: dateLabel,
     diffLabel: diffLabel,
-    nowColumn: nowColumn,
+    dayNightGlyph: dayNightGlyph,
     compactLabel: compactLabel,
     plainText: plainText,
     defaultZones: defaultZones
