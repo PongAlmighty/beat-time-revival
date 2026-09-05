@@ -53,8 +53,9 @@ omarchy plugin add https://github.com/PongAlmighty/beat-time-revival.git --enabl
 
 ## Usage
 
-- **Hover** the beat: compact view of your zones' local times. Up to three
-  zones sit still; more than that scroll through slowly, ticker style.
+- **Hover** the beat: compact view of your zones' local times. With up to
+  three rows in the popup the view sits still; more than that scroll
+  through slowly, ticker style.
 - **Right click**: open/close the beat grid (Escape also closes)
 - **Hover a beat** in the popup: converts that beat across all zones
 - **Middle click**: refresh timezone offsets
@@ -124,10 +125,11 @@ save). Example:
 - `beatsPerCell` — grid granularity: one of `25`, `40`, `50`, `100`, `125`,
   `200`. Default `50` (20 columns of 72 minutes). `40` gives 25 columns of
   roughly one hour each.
-- `tickerZones` — how many zones the bar's hover view shows at rest. With
-  more zones than this, the view stays that wide and the full list scrolls
-  through it. Default `3`.
-- `tickerSpeed` — ticker scroll speed in pixels per second. Default `24`.
+- `tickerZones` — how many popup rows, home included, the bar's hover view
+  shows at rest. With more rows than this, the view stays as wide as the
+  entries that fit under that count and the full list scrolls through it.
+  Default `3`.
+- `tickerSpeed` — ticker scroll speed in pixels per second. Default `22`.
 - `icon` — optional glyph drawn before the beat in the bar. Default none.
 - `hoverExpand` — set `false` to keep the bar pill static instead of
   expanding on hover. Default `true`.

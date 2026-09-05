@@ -27,14 +27,16 @@ BarWidget {
   readonly property string compact: compactParts.join(Model.SEPARATOR)
   readonly property bool expanded: hoverExpand && !vertical && button.tooltipHovered && compact !== ""
 
-  // Up to `tickerZones` zones sit still in the hover label. Past that the
-  // label becomes a window the width of that many zones and the full list
-  // scrolls through it slowly, ticker style, so a long list never shoves
-  // the neighboring widgets around.
-  readonly property int tickerZones: Math.max(1, parseInt(setting("tickerZones", 3), 10) || 3)
-  readonly property real tickerSpeed: Math.max(1, Number(setting("tickerSpeed", 24)) || 24)
-  readonly property bool ticker: compactParts.length > tickerZones
-  readonly property string tickerWindowText: compactParts.slice(0, tickerZones).join(Model.SEPARATOR)
+  // With up to `tickerZones` rows in the popup (home included) the hover
+  // label sits still. Past that it becomes a window the width of the
+  // entries that fit under that count and the full list scrolls through
+  // it slowly, ticker style, so a long list never shoves the neighboring
+  // widgets around.
+  readonly property int zoneCount: panelLoader.item ? panelLoader.item.zoneCount : 0
+  readonly property int tickerZones: Math.max(2, parseInt(setting("tickerZones", 3), 10) || 3)
+  readonly property real tickerSpeed: Math.max(1, Number(setting("tickerSpeed", 22)) || 22)
+  readonly property bool ticker: zoneCount > tickerZones
+  readonly property string tickerWindowText: compactParts.slice(0, tickerZones - 1).join(Model.SEPARATOR)
   readonly property string tickerLoopText: compact + Model.SEPARATOR
 
   // Vertical bars stack the beat one character per line, like the clock.

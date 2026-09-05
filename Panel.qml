@@ -135,6 +135,7 @@ Panel {
   // What the bar pill shows on hover.
   readonly property var compactParts: ready ? Model.compactParts(zones, nowUtc, glyphs) : []
   readonly property string compactLabel: compactParts.join(Model.SEPARATOR)
+  readonly property int zoneCount: zones.length
 
   // ---- Grid geometry.
   readonly property real stripW: Style.space(660)
