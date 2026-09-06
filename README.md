@@ -1,49 +1,48 @@
 # Beat Time
 
-[Swatch Internet Time](https://en.wikipedia.org/wiki/Swatch_Internet_Time)
-for the [Omarchy](https://omarchy.org/) bar, with a popup that answers the
-one question beats cannot: *is @330 the middle of the night or the middle of
-the day for them?*
+Do you hate time zones? Do you have trouble coordinating with people across
+the planet? Do you long for a system that could handle all of this?
+Especially one that came out about 10 years before it was necessary AT ALL?
+If so, my oddly specific friend, this is for you!
 
-Internet Time divides the day into 1000 `.beats` of 86.4 seconds, counted
-from midnight in Biel, Switzerland (UTC+1, no daylight saving). One beat is
-the same everywhere, so there are no timezones to convert — but that also
-means a beat carries no hint of whether anyone is awake. This widget puts
-the beat in your bar and projects your zones onto the 1000-beat day so the
-day/night cycle is visible at a glance.
+**I'LL CONFESS.** In 1998, Swatch looked at the entire planet's clocks and
+said "no." They chopped the day into 1,000 pieces, called each one a
+".beat," pinned it to midnight in a small Swiss town, and announced that
+time zones were over. Suddenly, time is the same everywhere! @500 in Tokyo
+is @500 in Toledo. There is nothing to convert! Ever! And no one cared.
 
-By TheMightyPong ([PongAlmighty](https://github.com/PongAlmighty) on
-GitHub). Derived from Simon Späti's
-[omarchy-timezones-plugin](https://github.com/sspaeti/omarchy-timezones-plugin)
-(MIT). Beat math follows the canonical definition from the
-[SwatchTime](https://github.com/swatchtime) organization.
+Except me. And if you've read THIS far, probably YOU.
 
-## What you get
+**BUT PONG, YOU ASK.** If @330 is the same everywhere, how do I know
+whether my friend in Manila is eating lunch or asleep with her phone face
+down? That question killed Internet Time in 1999, and this plugin answers
+it. Right-click the beat. A grid unfolds: one thousand beats across the
+top, and one strip for every person you care about. Strips glow during
+business hours and go dark for the dead of night. Hover any beat and every
+row converts. Know in one glance that @330 is a perfectly civilized 2:55pm
+in Manila and a crime in Los Angeles.
 
-- **Bar pill**: the current beat, e.g. `@767`. Hover and it expands to each
-  configured zone's local time with a day/night glyph, e.g.
-  `󰖙 NY 07:12 · 󰖔 CDO 23:12`.
-- **Popup** (right click): a 1000-beat ruler across the top, then one strip
-  per zone. Each cell shows the local hour at that beat span, tinted by
-  business hours (accent), waking hours (light), and night (dark). Where a
-  zone's local midnight falls, the cell carries the new day's label. A line
-  marks the current beat across every row.
-- **Hover a beat** in the popup and every row's header switches to the local
-  time at that beat — "@330 is 01:55 in New York, 07:55 in Biel".
-- **Edit zones in the popup**: "+ Add zone" opens a searchable picker over
-  every zone tzdata knows, rows drag to reorder, click a row's header to
-  rename it, and a remove button appears at the right edge of the row under
-  the cursor. All of it works from the keyboard too.
+**AND THERE'S MORE.** Add a zone from a searchable list of all 598 zones
+from tzdata. Rename it. Drag it to reorder. Remove it. Mouse? Keyboard?
+Yes. Pile on zones and the bar scrolls them past like a ticker at a stock
+exchange that trades in beats. It follows your Omarchy theme so it never
+ruins the vibe. It uses no network, asks for no privileges, runs no daemon,
+and will always pay its bills ON TIME. .beat time, that is!
 
-No network, no API: zone offsets and abbreviations come straight from the
-system's tzdata (`TZ=<zone> date`), so summer/winter time is always
-correct. Beats themselves need nothing but the system clock. The home row
-follows the **system timezone**, so it updates when you travel.
+**THE BOTTOM LINE.** Swatch was right. They were just early. Free, MIT
+licensed, built on Simon Späti's excellent
+[omarchy-timezones-plugin](https://github.com/sspaeti/omarchy-timezones-plugin).
+Beat math follows the canonical definition from the
+[SwatchTime](https://github.com/swatchtime) organization. By TheMightyPong
+([PongAlmighty](https://github.com/PongAlmighty) on GitHub). To kick the
+tires:
 
-Colors and fonts come from the active Omarchy theme, so it restyles on
-`omarchy theme set <name>`.
+```sh
+omarchy plugin add https://github.com/PongAlmighty/beat-time-revival.git --enable
+```
 
-Popup preview:
+And look at the clock. It's @something. It always was.
+
 ![preview](preview.png)
 
 ## Install
