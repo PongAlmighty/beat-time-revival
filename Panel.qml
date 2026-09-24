@@ -67,7 +67,12 @@ Panel {
   }
 
   function setCenterHoverRevealSuppressed(value) {
-    if (root.bar && "centerHoverRevealSuppressed" in root.bar)
+    // The plugin bar API exposes this as a readonly property plus a setter;
+    // only the built-in Bar itself takes a direct assignment. Writing to the
+    // readonly one throws on every call, so prefer the setter.
+    if (root.bar && typeof root.bar.setCenterHoverRevealSuppressed === "function")
+      root.bar.setCenterHoverRevealSuppressed(value)
+    else if (root.bar && "centerHoverRevealSuppressed" in root.bar)
       root.bar.centerHoverRevealSuppressed = value
   }
 
