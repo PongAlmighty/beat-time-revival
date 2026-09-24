@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0
+
+- Alignment toggle at the popup's bottom right: start every row at `@000`
+  (the Biel day, as before) or at the home row's local midnight, so home
+  reads 0 to 23 left to right. Saved as `alignment` in the widget entry;
+  IPC `toggleAlignment` flips it too.
+- 12-hour clock toggle beside it: row headers, grid cells and the bar's
+  hover view switch between `19:48` / `19` and `7:48pm` / `7p`. Saved as
+  `hourFormat`; IPC `toggleHourFormat`.
+- Grid cells are labeled by the hour at the middle of their span rather
+  than at their left edge, so a 22:48 to midnight cell reads 23, not 22.
+- Fix: the popup set the bar's hover-reveal flag through a read-only
+  property, throwing a TypeError on every open and close. Over days the
+  warning spam could fill the shell's log and take its IPC socket down.
+  The bar's setter is used instead.
+
 ## 0.2.0
 
 - Zones are edited in the popup: "+ Add zone" opens a searchable tzdata

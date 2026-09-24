@@ -109,6 +109,8 @@ BarWidget {
     function add(): void { if (panelLoader.item) panelLoader.item.openAddFromHotkey() }
     function addZone(zone: string): void { if (panelLoader.item) panelLoader.item.addZone(zone, "", "") }
     function removeZone(zone: string): void { if (panelLoader.item) panelLoader.item.removeZoneByName(zone) }
+    function toggleAlignment(): void { if (panelLoader.item) panelLoader.item.toggleAlignment() }
+    function toggleHourFormat(): void { if (panelLoader.item) panelLoader.item.toggleHourFormat() }
   }
 
   WidgetButton {

@@ -52,6 +52,21 @@ function beatToUtc(dayStartUtcMs, beats) {
   return dayStartUtcMs + beats * BEAT_MS
 }
 
+// UTC ms of a zone's most recent local midnight — the left edge of the grid
+// when it is aligned to that zone's day instead of the Biel day.
+function localDayStartUtc(nowUtcMs, offsetMin) {
+  var local = nowUtcMs + offsetMin * 60000
+  return local - mod(local, DAY_MS) - offsetMin * 60000
+}
+
+// Fractional beats from the grid's left edge to a UTC instant. With the
+// grid on the Biel day this is beatsAt(); on a zone's day it is shifted by
+// that zone's midnight, e.g. UTC-7 midnight is @333.33 so the "now" line
+// and hover positions move left by that much.
+function gridPos(utcMs, gridStartUtcMs) {
+  return (utcMs - gridStartUtcMs) / BEAT_MS
+}
+
 // "+0200" / "-0930" → signed minutes east of UTC.
 function parseUtcOffset(text) {
   var m = /^([+-])(\d{2}):?(\d{2})$/.exec(String(text || "").trim())
@@ -104,9 +119,12 @@ function tintFor(hour) {
   return "night"
 }
 
-// One zone cell: the local hour at the start of the beat span
-// [col*size, (col+1)*size). If the zone's local midnight falls inside the
-// span, the cell is a day boundary and carries the new day's label instead.
+// One zone cell for the beat span [col*size, (col+1)*size): the local hour
+// at the middle of the span, which is the hour most of the span falls in.
+// Spans are 72 minutes at 50 beats/cell, so the hour at the left edge
+// would mislabel a 22:48-24:00 cell as 22. If the zone's local midnight
+// falls inside the span, the cell is a day boundary and carries the new
+// day's label instead.
 function cell(col, size, dayStartUtcMs, offsetMin) {
   var startUtc = beatToUtc(dayStartUtcMs, col * size)
   var endUtc = beatToUtc(dayStartUtcMs, (col + 1) * size)
@@ -115,7 +133,7 @@ function cell(col, size, dayStartUtcMs, offsetMin) {
   // A midnight k*DAY lies in [localStart, localEnd) iff the day index of
   // (localEnd - 1) exceeds that of (localStart - 1).
   var crossesMidnight = Math.floor((localEnd - 1) / DAY_MS) > Math.floor((localStart - 1) / DAY_MS)
-  var f = localFields(startUtc, offsetMin)
+  var f = localFields((startUtc + endUtc) / 2, offsetMin)
   var dayFields = localFields(endUtc - 1, offsetMin)
   return {
     hour: f.hour,
@@ -126,9 +144,12 @@ function cell(col, size, dayStartUtcMs, offsetMin) {
 }
 
 // Ruler cell: the beat at which the column starts, e.g. "@000", "050".
-function rulerLabel(col, size) {
-  var b = col * size
-  return col === 0 ? "@000" : pad3(b)
+// `gridStartUtcMs` moves the grid's left edge off Biel midnight (a zone's
+// own midnight), so the labels start mid-day and wrap past @999.
+function rulerLabel(col, size, gridStartUtcMs) {
+  var origin = gridStartUtcMs === undefined ? 0 : beatsAt(gridStartUtcMs)
+  var b = Math.floor(mod(origin + col * size, 1000))
+  return col === 0 ? "@" + pad3(b) : pad3(b)
 }
 
 // Configurable strings (icon, labels, abbreviations) are rendered by Text
@@ -143,10 +164,19 @@ function pad2(n) {
   return (n < 10 ? "0" : "") + n
 }
 
-// "07:12" for a zone at a UTC instant.
-function timeLabel(utcMs, offsetMin) {
+// "07:12" for a zone at a UTC instant; "7:12pm" on a 12-hour clock. The
+// meridiem is glued on lowercase so the label stays narrow in the bar and
+// the row headers.
+function timeLabel(utcMs, offsetMin, twelveHour) {
   var f = localFields(utcMs, offsetMin)
-  return pad2(f.hour) + ":" + pad2(f.minute)
+  if (!twelveHour) return pad2(f.hour) + ":" + pad2(f.minute)
+  return (f.hour % 12 || 12) + ":" + pad2(f.minute) + (f.hour < 12 ? "am" : "pm")
+}
+
+// Grid cell hour: "14", or "2p" on a 12-hour clock ("12a" is midnight).
+function hourLabel(hour, twelveHour) {
+  if (!twelveHour) return String(hour)
+  return (hour % 12 || 12) + (hour < 12 ? "a" : "p")
 }
 
 // "Thu 21 Aug" style date.
@@ -174,12 +204,12 @@ function dayNightGlyph(utcMs, offsetMin) {
 }
 
 // One bar-label entry per non-home zone: "󰖙 NY 07:12".
-function compactParts(zones, nowUtcMs, glyphs) {
+function compactParts(zones, nowUtcMs, glyphs, twelveHour) {
   var parts = []
   for (var i = 0; i < zones.length; i++) {
     var z = zones[i]
     if (z.home || z.offsetMin === undefined || z.offsetMin === null) continue
-    var s = plainText(z.shortLabel) + " " + timeLabel(nowUtcMs, z.offsetMin)
+    var s = plainText(z.shortLabel) + " " + timeLabel(nowUtcMs, z.offsetMin, twelveHour)
     if (glyphs) s = dayNightGlyph(nowUtcMs, z.offsetMin) + " " + s
     parts.push(s)
   }
@@ -189,8 +219,8 @@ function compactParts(zones, nowUtcMs, glyphs) {
 var SEPARATOR = " · "
 
 // Compact bar label shown on hover: "󰖙 NY 07:12 · 󰖔 CDO 19:12".
-function compactLabel(zones, nowUtcMs, glyphs) {
-  return compactParts(zones, nowUtcMs, glyphs).join(SEPARATOR)
+function compactLabel(zones, nowUtcMs, glyphs, twelveHour) {
+  return compactParts(zones, nowUtcMs, glyphs, twelveHour).join(SEPARATOR)
 }
 
 // ---- Zone list editing.
@@ -260,6 +290,8 @@ if (typeof module !== "undefined") {
     beatLabel: beatLabel,
     bielDayStartUtc: bielDayStartUtc,
     beatToUtc: beatToUtc,
+    localDayStartUtc: localDayStartUtc,
+    gridPos: gridPos,
     parseUtcOffset: parseUtcOffset,
     parseOffsetLines: parseOffsetLines,
     localFields: localFields,
@@ -268,6 +300,7 @@ if (typeof module !== "undefined") {
     rulerLabel: rulerLabel,
     tintFor: tintFor,
     timeLabel: timeLabel,
+    hourLabel: hourLabel,
     dateLabel: dateLabel,
     diffLabel: diffLabel,
     dayNightGlyph: dayNightGlyph,

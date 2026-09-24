@@ -79,6 +79,8 @@ Scripts and keybindings can do the same over IPC:
 omarchy-shell io.github.pongalmighty.beattime add              # open the popup on the picker
 omarchy-shell io.github.pongalmighty.beattime addZone Asia/Tokyo
 omarchy-shell io.github.pongalmighty.beattime removeZone Asia/Tokyo
+omarchy-shell io.github.pongalmighty.beattime toggleAlignment  # @000 or home midnight at the left edge
+omarchy-shell io.github.pongalmighty.beattime toggleHourFormat # 24-hour or 12-hour clock
 omarchy bar set io.github.pongalmighty.beattime zones '[...]' --json   # replace the whole list
 ```
 
@@ -99,6 +101,8 @@ save). Example:
   "centibeats": false,
   "glyphs": true,
   "beatsPerCell": 50,
+  "alignment": "beats",
+  "hourFormat": 24,
   "homeZones": ["America/Chicago"],
   "zones": [
     { "label": "Home", "shortLabel": "HOME", "zone": "", "home": true },
@@ -125,6 +129,14 @@ save). Example:
 - `beatsPerCell` — grid granularity: one of `25`, `40`, `50`, `100`, `125`,
   `200`. Default `50` (20 columns of 72 minutes). `40` gives 25 columns of
   roughly one hour each.
+- `alignment` — where the grid's left edge sits. `"beats"` (default) starts
+  every row at `@000`; `"home"` starts every row at the home row's local
+  midnight, so home reads 0 to 23 left to right and the ruler starts
+  mid-day. The first button at the popup's bottom right, across from "Add
+  zone", toggles this and saves it here. Row order is the same either way.
+- `hourFormat` — `24` (default) or `12`. With `12`, row headers and the bar's
+  hover view read `7:48pm` and grid cells read `7p`. The second button at the
+  popup's bottom right toggles this and saves it here.
 - `tickerZones` — how many popup rows, home included, the bar's hover view
   shows at rest. With more rows than this, the view stays as wide as the
   entries that fit under that count and the full list scrolls through it.
@@ -150,8 +162,11 @@ beats  = bielMs / 86400                     // 1 beat = 86.4 s
 label  = "@" + zeroPad3(floor(beats))
 ```
 
-The grid's column 0 is the most recent Biel midnight (23:00 UTC). A zone's
-cell at column `c` is its local time at beat `c × beatsPerCell`. Centibeats
+The grid's column 0 is the most recent Biel midnight (23:00 UTC), or with
+`alignment: "home"` the home row's most recent local midnight. A zone's
+cell at column `c` covers the `beatsPerCell` beats after that, and is
+labeled and tinted by the local hour at the middle of that span, the hour
+most of the cell falls in. Hover a cell for the exact time. Centibeats
 are rounded to two decimals *before* wrapping, so the display never flashes
 `@1000.00`.
 

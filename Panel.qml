@@ -90,6 +90,12 @@ Panel {
   readonly property bool centibeats: setting("centibeats", false) === true
   readonly property bool glyphs: setting("glyphs", true) === true
   readonly property int beatsPerCell: Model.cellSize(setting("beatsPerCell", 50))
+  // Where the grid's left edge sits: "beats" puts @000 there (the Biel day),
+  // "home" puts the home row's local midnight there so the home row reads
+  // 0 to 23 left to right. Row order is untouched either way.
+  readonly property bool homeAligned: setting("alignment", "beats") === "home"
+  // 12-hour clock for row headers, grid cells and the bar's hover label.
+  readonly property bool twelveHour: String(setting("hourFormat", 24)) === "12"
   readonly property int columns: 1000 / beatsPerCell
   readonly property color fg: bar ? bar.foreground : "#e0e0e0"
   readonly property string fontFam: bar ? bar.fontFamily : Style.font.family
@@ -129,14 +135,20 @@ Panel {
   // Beats need no zone: the label is live before the tzdata probe returns.
   readonly property string beatLabel: Model.beatLabel(nowUtc, centibeats)
   readonly property double dayStart: Model.bielDayStartUtc(nowUtc)
-  readonly property double nowBeats: Model.beatsAt(nowUtc)
 
-  // Hovered beat (whole), or -1. The moment every row converts when set.
-  property int hoverBeat: -1
-  readonly property double focusUtc: hoverBeat >= 0 ? Model.beatToUtc(dayStart, hoverBeat) : nowUtc
+  // UTC instant at the grid's left edge (column 0). Every strip, the ruler,
+  // the "now" line and hover positions measure from here in beats.
+  readonly property double gridStartUtc: homeAligned && ready ? Model.localDayStartUtc(nowUtc, homeRow.offsetMin) : dayStart
+  readonly property double nowPos: Model.gridPos(nowUtc, gridStartUtc)
+
+  // Hovered grid position in whole beats from the left edge, or -1. The
+  // moment every row converts when set; hoverBeat is its Internet Time.
+  property int hoverPos: -1
+  readonly property double focusUtc: hoverPos >= 0 ? Model.beatToUtc(gridStartUtc, hoverPos) : nowUtc
+  readonly property int hoverBeat: hoverPos >= 0 ? Model.beatAt(focusUtc) : -1
 
   // What the bar pill shows on hover.
-  readonly property var compactParts: ready ? Model.compactParts(zones, nowUtc, glyphs) : []
+  readonly property var compactParts: ready ? Model.compactParts(zones, nowUtc, glyphs, twelveHour) : []
   readonly property string compactLabel: compactParts.join(Model.SEPARATOR)
   readonly property int zoneCount: zones.length
 
@@ -150,9 +162,10 @@ Panel {
   readonly property real headerGap: Style.space(14)
   readonly property real rowGap: Style.space(6)
   readonly property real stripX: headerW + headerGap
-  readonly property real actionGap: Style.space(8)
+  // Row actions (remove, the view toggles) sit inside the strip's width,
+  // over its last cell, so the card ends where the grid does.
   readonly property real actionW: Style.space(22)
-  readonly property real rowsW: stripX + stripW + actionGap + actionW
+  readonly property real rowsW: stripX + stripW
   readonly property real rowPitch: cellH + rowGap
   readonly property real zonesY: rulerH + rowGap
   readonly property real gridH: zonesY + zones.length * cellH + Math.max(0, zones.length - 1) * rowGap
@@ -188,14 +201,26 @@ Panel {
   // Applied locally first so the grid redraws on the gesture itself; the
   // shell.json write comes back through the bar as the same value. The host
   // widget's copy is kept in step so the bar's hover label follows too.
-  function persistZones(list) {
+  function persistSetting(name, value) {
     var entry = { id: root.moduleName }
     for (var key in root.settings) if (key !== "id") entry[key] = root.settings[key]
-    entry.zones = list
+    entry[name] = value
     root.settings = entry
     if (root.hostWidget && "settings" in root.hostWidget) root.hostWidget.settings = entry
     if (root.bar && root.bar.shell && typeof root.bar.shell.updateEntryInline === "function")
       root.bar.shell.updateEntryInline(root.moduleName, entry)
+  }
+
+  function persistZones(list) {
+    persistSetting("zones", list)
+  }
+
+  function toggleAlignment() {
+    persistSetting("alignment", root.homeAligned ? "beats" : "home")
+  }
+
+  function toggleHourFormat() {
+    persistSetting("hourFormat", root.twelveHour ? 24 : 12)
   }
 
   function validZoneName(zone) {
@@ -521,7 +546,7 @@ Panel {
                 Text {
                   anchors.left: parent.left
                   anchors.verticalCenter: parent.verticalCenter
-                  text: Model.rulerLabel(parent.index, root.beatsPerCell)
+                  text: Model.rulerLabel(parent.index, root.beatsPerCell, root.gridStartUtc)
                   color: root.fg
                   font.family: root.fontFam
                   font.pixelSize: Style.font.caption
@@ -530,6 +555,7 @@ Panel {
               }
             }
           }
+
         }
 
         Text {
@@ -555,6 +581,9 @@ Panel {
             readonly property bool hasCursor: root.cursorRow === index
             readonly property bool isDragSource: root.dragFrom === index
             readonly property bool renaming: root.editRow === index
+            // The remove button sits over the strip's last cell, whose hour
+            // label steps aside while it shows.
+            readonly property bool showRemove: hasCursor && !zoneRow.home && !root.dragging && !renaming
             width: root.rowsW
             height: root.cellH
             z: isDragSource ? 10 : 0
@@ -623,7 +652,7 @@ Panel {
                   font.pixelSize: Style.font.body
                 }
                 Text {
-                  text: zoneItem.rowReady ? Model.timeLabel(root.focusUtc, zoneItem.zoneRow.offsetMin) : "—"
+                  text: zoneItem.rowReady ? Model.timeLabel(root.focusUtc, zoneItem.zoneRow.offsetMin, root.twelveHour) : "—"
                   color: root.hoverBeat >= 0 ? Color.accent : root.fg
                   font.family: root.fontFam
                   font.pixelSize: Style.font.body
@@ -740,8 +769,9 @@ Panel {
               }
             }
 
-            // ---- Beat strip: one Biel day left to right, each cell the
-            //      zone's local hour at that beat span.
+            // ---- Beat strip: one day left to right from the grid's left
+            //      edge (@000, or home's midnight), each cell the zone's
+            //      local hour at that beat span.
             Row {
               x: root.stripX
               anchors.verticalCenter: parent.verticalCenter
@@ -752,8 +782,8 @@ Panel {
 
                 Rectangle {
                   required property int index
-                  readonly property var c: Model.cell(index, root.beatsPerCell, root.dayStart, zoneItem.zoneRow.offsetMin)
-                  readonly property bool hot: root.hoverBeat >= 0 && Math.floor(root.hoverBeat / root.beatsPerCell) === index
+                  readonly property var c: Model.cell(index, root.beatsPerCell, root.gridStartUtc, zoneItem.zoneRow.offsetMin)
+                  readonly property bool hot: root.hoverPos >= 0 && Math.floor(root.hoverPos / root.beatsPerCell) === index
                   width: root.cellW
                   height: root.cellH
                   radius: Style.space(3)
@@ -765,7 +795,8 @@ Panel {
                     anchors.centerIn: parent
                     horizontalAlignment: Text.AlignHCenter
                     lineHeight: 0.85
-                    text: c.isMidnight ? c.dayLabel.replace(" ", "\n") : String(c.hour)
+                    visible: !(zoneItem.showRemove && index === root.columns - 1)
+                    text: c.isMidnight ? c.dayLabel.replace(" ", "\n") : Model.hourLabel(c.hour, root.twelveHour)
                     color: c.isMidnight ? root.fg
                          : c.tint === "night" ? Qt.darker(root.fg, 1.6)
                          : root.fg
@@ -778,12 +809,12 @@ Panel {
             }
 
             // ---- Remove: the right-edge row action (Bluetooth's "Forget"),
-            //      shown while the row has the cursor. Home tracks the system
-            //      timezone and stays.
+            //      shown over the strip's last cell while the row has the
+            //      cursor. Home tracks the system timezone and stays.
             PanelActionButton {
-              x: root.stripX + root.stripW + root.actionGap
+              x: root.stripX + root.stripW - root.actionW
               anchors.verticalCenter: parent.verticalCenter
-              visible: zoneItem.hasCursor && !zoneItem.zoneRow.home && !root.dragging && !zoneItem.renaming
+              visible: zoneItem.showRemove
               iconText: "󰅙"
               tooltipText: "Remove"
               foreground: root.fg
@@ -836,6 +867,39 @@ Panel {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: root.openAdd()
+          }
+
+          // ---- View toggles, bottom right across from "Add zone", under
+          //      the strip's last two cells. Each
+          //      shows the state a click switches to, like the zone rows'
+          //      remove button shows its action. Alignment swaps the grid's
+          //      left edge between @000 and home's local midnight; the clock
+          //      swaps every time and hour label between 24- and 12-hour.
+          //      Hidden while the add row's picker and fields are up.
+          Row {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Style.spacing.xs
+            visible: !root.addOpen
+
+            PanelActionButton {
+              iconText: root.homeAligned ? "@" : "󰋜"
+              tooltipText: root.homeAligned ? "Start the grid at @000" : "Start the grid at local midnight"
+              foreground: root.fg
+              hoverColor: root.fg
+              fontFamily: root.fontFam
+              onClicked: root.toggleAlignment()
+            }
+
+            PanelActionButton {
+              iconText: root.twelveHour ? "24" : "12"
+              fontSize: Style.font.caption
+              tooltipText: root.twelveHour ? "24-hour clock" : "12-hour clock"
+              foreground: root.fg
+              hoverColor: root.fg
+              fontFamily: root.fontFam
+              onClicked: root.toggleHourFormat()
+            }
           }
 
           Row {
@@ -907,7 +971,7 @@ Panel {
 
       // ---- "Now" line across ruler and zone rows, at the exact beat.
       Rectangle {
-        x: root.stripX + root.nowBeats / 1000 * root.stripW - 1
+        x: root.stripX + root.nowPos / 1000 * root.stripW - 1
         y: 0
         width: 2
         height: root.gridH
@@ -940,17 +1004,17 @@ Panel {
         acceptedButtons: Qt.NoButton
         onPositionChanged: function(mouse) {
           var sx = mouse.x - root.stripX
-          root.hoverBeat = (sx >= 0 && sx < root.stripW)
+          root.hoverPos = (sx >= 0 && sx < root.stripW)
             ? Math.max(0, Math.min(999, Math.floor(sx / root.stripW * 1000)))
             : -1
-          root.actionHot = mouse.x >= root.stripX + root.stripW + root.actionGap
+          root.actionHot = mouse.x >= root.stripX + root.stripW - root.actionW && sx < root.stripW
           if (root.dragging) return
           var row = Math.floor(mouse.y / root.rowPitch)
           var inRow = mouse.y - row * root.rowPitch < root.cellH
           root.cursorRow = inRow && row >= 0 && row < root.zones.length ? row : -1
         }
         onExited: {
-          root.hoverBeat = -1
+          root.hoverPos = -1
           root.actionHot = false
           if (!root.dragging && !root.editing) root.cursorRow = -1
         }

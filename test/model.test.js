@@ -71,6 +71,60 @@ test("ruler labels", () => {
   assert.equal(M.rulerLabel(19, 50), "950")
 })
 
+test("grid aligned to a zone's day: origin, positions, labels, cells", () => {
+  // 19:35 in UTC-7 on 2025-06-01: local midnight was 07:00 UTC.
+  const now = utc("2025-06-02T02:35:00Z")
+  const start = M.localDayStartUtc(now, -420)
+  assert.equal(start, utc("2025-06-01T07:00:00Z"))
+  // UTC-7 midnight is 08:00 Biel = @333.33; the left edge sits there.
+  assert.ok(Math.abs(M.beatsAt(start) - 1000 / 3) < 1e-9)
+  // Now is 19h35m past that edge: 1175 min = 816.66 beats into the grid.
+  assert.ok(Math.abs(M.gridPos(now, start) - 1175 * 60000 / 86400) < 1e-9)
+  assert.equal(M.gridPos(start, start), 0)
+  // Ruler starts mid-day and wraps past @999 without a "@000" column.
+  assert.equal(M.rulerLabel(0, 50, start), "@333")
+  assert.equal(M.rulerLabel(1, 50, start), "383")
+  assert.equal(M.rulerLabel(13, 50, start), "983")
+  assert.equal(M.rulerLabel(14, 50, start), "033")
+  // Zone rows read from the same left edge: home's column 0 is midnight
+  // and no other home cell crosses one; Biel (UTC+1) crosses at 16:00 local.
+  const home0 = M.cell(0, 50, start, -420)
+  assert.equal(home0.isMidnight, true)
+  assert.equal(home0.hour, 0)
+  assert.equal(home0.dayLabel, "Sun 1")
+  for (let c = 1; c < 20; c++) assert.equal(M.cell(c, 50, start, -420).isMidnight, false)
+  assert.equal(M.cell(13, 50, start, 60).isMidnight, true)
+  assert.equal(M.cell(13, 50, start, 60).dayLabel, "Mon 2")
+  // Cells carry the hour most of their span falls in, not the left edge's:
+  // the last home cell runs 22:48-24:00 and reads 23, and 3:36-4:48 reads 4.
+  assert.equal(M.cell(19, 50, start, -420).hour, 23)
+  assert.equal(M.cell(19, 50, start, -420).tint, "night")
+  assert.equal(M.cell(3, 50, start, -420).hour, 4)
+  assert.equal(M.cell(1, 50, start, -420).hour, 1)
+  // The Biel-day grid is the origin-zero case of the same helpers.
+  const biel = M.bielDayStartUtc(now)
+  assert.equal(M.gridPos(now, biel), M.beatsAt(now))
+  assert.equal(M.rulerLabel(0, 50, biel), "@000")
+})
+
+test("12-hour clock labels", () => {
+  const t = (h, m) => utc(`2025-06-01T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00Z`)
+  assert.equal(M.timeLabel(t(0, 5), 0, true), "12:05am")
+  assert.equal(M.timeLabel(t(11, 59), 0, true), "11:59am")
+  assert.equal(M.timeLabel(t(12, 0), 0, true), "12:00pm")
+  assert.equal(M.timeLabel(t(19, 48), 0, true), "7:48pm")
+  assert.equal(M.timeLabel(t(19, 48), 0, false), "19:48")
+  assert.equal(M.timeLabel(t(19, 48), 0), "19:48")
+  assert.equal(M.hourLabel(0, true), "12a")
+  assert.equal(M.hourLabel(11, true), "11a")
+  assert.equal(M.hourLabel(12, true), "12p")
+  assert.equal(M.hourLabel(23, true), "11p")
+  assert.equal(M.hourLabel(23, false), "23")
+  const zones = [{ shortLabel: "NY", offsetMin: -240 }]
+  assert.equal(M.compactLabel(zones, t(19, 48), false, true), "NY 3:48pm")
+  assert.equal(M.compactLabel(zones, t(19, 48), false), "NY 15:48")
+})
+
 test("day/night glyph and compact label", () => {
   const noonUtc = utc("2025-06-01T12:00:00Z")
   assert.equal(M.dayNightGlyph(noonUtc, 0), "󰖙")
